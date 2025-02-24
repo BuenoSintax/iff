@@ -1,0 +1,50 @@
+[2025-02-24T04:25:30.400+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2025-02-24T04:25:30.417+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_landings3.run_integrate_py scheduled__2025-02-23T00:00:00+00:00 [queued]>
+[2025-02-24T04:25:30.432+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_landings3.run_integrate_py scheduled__2025-02-23T00:00:00+00:00 [queued]>
+[2025-02-24T04:25:30.433+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 1
+[2025-02-24T04:25:30.457+0000] {taskinstance.py:2890} INFO - Executing <Task(BashOperator): run_integrate_py> on 2025-02-23 00:00:00+00:00
+[2025-02-24T04:25:30.461+0000] {standard_task_runner.py:72} INFO - Started process 52 to run task
+[2025-02-24T04:25:30.473+0000] {standard_task_runner.py:104} INFO - Running: ['airflow', 'tasks', 'run', 'dag_landings3', 'run_integrate_py', 'scheduled__2025-02-23T00:00:00+00:00', '--job-id', '3', '--raw', '--subdir', 'DAGS_FOLDER/dag_landings3.py', '--cfg-path', '/tmp/tmpg4o1mxe3']
+[2025-02-24T04:25:30.478+0000] {standard_task_runner.py:105} INFO - Job 3: Subtask run_integrate_py
+[2025-02-24T04:25:30.563+0000] {task_command.py:467} INFO - Running <TaskInstance: dag_landings3.run_integrate_py scheduled__2025-02-23T00:00:00+00:00 [running]> on host c9f7a13d5dc6
+[2025-02-24T04:25:30.668+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='airflow' AIRFLOW_CTX_DAG_ID='dag_landings3' AIRFLOW_CTX_TASK_ID='run_integrate_py' AIRFLOW_CTX_EXECUTION_DATE='2025-02-23T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2025-02-23T00:00:00+00:00'
+[2025-02-24T04:25:30.670+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2025-02-24T04:25:30.699+0000] {subprocess.py:78} INFO - Tmp dir root location: /tmp
+[2025-02-24T04:25:30.700+0000] {subprocess.py:88} INFO - Running command: ['/usr/bin/bash', '-c', 'python /home/infra/prompts/integrate.py 2>&1']
+[2025-02-24T04:25:30.708+0000] {subprocess.py:99} INFO - Output:
+[2025-02-24T04:25:31.027+0000] {subprocess.py:106} INFO - INFO:root:Iniciando download do arquivo: https://storage.googleapis.com/playoffs/iff/data_engineering.zip
+[2025-02-24T04:25:31.824+0000] {subprocess.py:106} INFO - INFO:root:Arquivo baixado e salvo em: /tmp/landing/data_engineering.zip
+[2025-02-24T04:25:31.927+0000] {subprocess.py:106} INFO - INFO:root:Conteúdo extraído para: /tmp/landing/extracted
+[2025-02-24T04:25:31.928+0000] {subprocess.py:106} INFO - INFO:root:Arquivo ZIP removido com sucesso.
+[2025-02-24T04:25:32.565+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/SalesTransactions_20240505_1.csv para s3://iffdatatest/landing/20250121/SalesTransactions_20240505_1.csv
+[2025-02-24T04:25:33.142+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/Flavours_20240505_1.csv para s3://iffdatatest/landing/20250121/Flavours_20240505_1.csv
+[2025-02-24T04:25:33.199+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/RawMaterialType_20240505_1.csv para s3://iffdatatest/landing/20250121/RawMaterialType_20240505_1.csv
+[2025-02-24T04:25:33.246+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/Provider_20240505_2.csv para s3://iffdatatest/landing/20250121/Provider_20240505_2.csv
+[2025-02-24T04:25:33.299+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/Provider_20240505_1.csv para s3://iffdatatest/landing/20250121/Provider_20240505_1.csv
+[2025-02-24T04:25:33.344+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/SalesTransactions_20240505_2.csv para s3://iffdatatest/landing/20250121/SalesTransactions_20240505_2.csv
+[2025-02-24T04:25:33.530+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250121/IngredientsRawMaterial_20240505.csv para s3://iffdatatest/landing/20250121/IngredientsRawMaterial_20240505.csv
+[2025-02-24T04:25:33.782+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Provider_20240506_1.csv para s3://iffdatatest/landing/20250122/Provider_20240506_1.csv
+[2025-02-24T04:25:33.867+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240507_3.csv para s3://iffdatatest/landing/20250122/Recipes_20240507_3.csv
+[2025-02-24T04:25:34.001+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240510_1.csv para s3://iffdatatest/landing/20250122/Recipes_20240510_1.csv
+[2025-02-24T04:25:34.172+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240507_1.csv para s3://iffdatatest/landing/20250122/Recipes_20240507_1.csv
+[2025-02-24T04:25:34.307+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/SalesTransactions_20240506_2.csv para s3://iffdatatest/landing/20250122/SalesTransactions_20240506_2.csv
+[2025-02-24T04:25:34.568+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240510_2.csv para s3://iffdatatest/landing/20250122/Recipes_20240510_2.csv
+[2025-02-24T04:25:34.713+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Ingredients_20240506_1.csv para s3://iffdatatest/landing/20250122/Ingredients_20240506_1.csv
+[2025-02-24T04:25:34.769+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240507_2.csv para s3://iffdatatest/landing/20250122/Recipes_20240507_2.csv
+[2025-02-24T04:25:34.888+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250122/SalesTransactions_20240506_1.csv para s3://iffdatatest/landing/20250122/SalesTransactions_20240506_1.csv
+[2025-02-24T04:25:35.032+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250125/Stocks_20240505_1.csv para s3://iffdatatest/landing/20250125/Stocks_20240505_1.csv
+[2025-02-24T04:25:35.078+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250124/Customers_20240508_1.csv para s3://iffdatatest/landing/20250124/Customers_20240508_1.csv
+[2025-02-24T04:25:35.130+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Ingredients_20240507_1.csv para s3://iffdatatest/landing/20250123/Ingredients_20240507_1.csv
+[2025-02-24T04:25:35.176+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Recipes_20240508_2.csv para s3://iffdatatest/landing/20250123/Recipes_20240508_2.csv
+[2025-02-24T04:25:35.290+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Recipes_20240505_1.csv para s3://iffdatatest/landing/20250123/Recipes_20240505_1.csv
+[2025-02-24T04:25:35.500+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Recipes_20240511_1.csv para s3://iffdatatest/landing/20250123/Recipes_20240511_1.csv
+[2025-02-24T04:25:35.544+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Recipes_20240511_2.csv para s3://iffdatatest/landing/20250123/Recipes_20240511_2.csv
+[2025-02-24T04:25:35.605+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Recipes_20240508_1.csv para s3://iffdatatest/landing/20250123/Recipes_20240508_1.csv
+[2025-02-24T04:25:35.758+0000] {subprocess.py:106} INFO - INFO:root:Enviando /tmp/landing/extracted/data/data_engineering/20250123/Recipes_20240511_3.csv para s3://iffdatatest/landing/20250123/Recipes_20240511_3.csv
+[2025-02-24T04:25:35.829+0000] {subprocess.py:106} INFO - INFO:root:Upload completo e diretório temporário removido.
+[2025-02-24T04:25:36.002+0000] {subprocess.py:110} INFO - Command exited with return code 0
+[2025-02-24T04:25:36.096+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2025-02-24T04:25:36.097+0000] {taskinstance.py:353} INFO - Marking task as SUCCESS. dag_id=dag_landings3, task_id=run_integrate_py, run_id=scheduled__2025-02-23T00:00:00+00:00, execution_date=20250223T000000, start_date=20250224T042530, end_date=20250224T042536
+[2025-02-24T04:25:36.165+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2025-02-24T04:25:36.200+0000] {taskinstance.py:3901} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2025-02-24T04:25:36.215+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

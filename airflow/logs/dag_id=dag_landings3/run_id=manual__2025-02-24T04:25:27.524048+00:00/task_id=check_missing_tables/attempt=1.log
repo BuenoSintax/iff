@@ -1,0 +1,18 @@
+[2025-02-24T04:25:48.433+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2025-02-24T04:25:48.456+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_landings3.check_missing_tables manual__2025-02-24T04:25:27.524048+00:00 [queued]>
+[2025-02-24T04:25:48.476+0000] {taskinstance.py:2614} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_landings3.check_missing_tables manual__2025-02-24T04:25:27.524048+00:00 [queued]>
+[2025-02-24T04:25:48.477+0000] {taskinstance.py:2867} INFO - Starting attempt 1 of 1
+[2025-02-24T04:25:48.505+0000] {taskinstance.py:2890} INFO - Executing <Task(PythonOperator): check_missing_tables> on 2025-02-24 04:25:27.524048+00:00
+[2025-02-24T04:25:48.508+0000] {standard_task_runner.py:72} INFO - Started process 169 to run task
+[2025-02-24T04:25:48.512+0000] {standard_task_runner.py:104} INFO - Running: ['airflow', 'tasks', 'run', 'dag_landings3', 'check_missing_tables', 'manual__2025-02-24T04:25:27.524048+00:00', '--job-id', '6', '--raw', '--subdir', 'DAGS_FOLDER/dag_landings3.py', '--cfg-path', '/tmp/tmpkkbdx6jk']
+[2025-02-24T04:25:48.514+0000] {standard_task_runner.py:105} INFO - Job 6: Subtask check_missing_tables
+[2025-02-24T04:25:48.566+0000] {task_command.py:467} INFO - Running <TaskInstance: dag_landings3.check_missing_tables manual__2025-02-24T04:25:27.524048+00:00 [running]> on host c9f7a13d5dc6
+[2025-02-24T04:25:48.645+0000] {taskinstance.py:3134} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='airflow' AIRFLOW_CTX_DAG_ID='dag_landings3' AIRFLOW_CTX_TASK_ID='check_missing_tables' AIRFLOW_CTX_EXECUTION_DATE='2025-02-24T04:25:27.524048+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2025-02-24T04:25:27.524048+00:00'
+[2025-02-24T04:25:48.646+0000] {taskinstance.py:732} INFO - ::endgroup::
+[2025-02-24T04:25:48.677+0000] {credentials.py:1147} INFO - Found credentials in environment variables.
+[2025-02-24T04:25:49.294+0000] {python.py:240} INFO - Done. Returned value was: ['dp_ingredients_staging', 'dp_customers_staging', 'dp_flavours_staging', 'dp_ingredientsrawmaterial_staging', 'dp_recipes_staging', 'dp_stocks_staging', 'dp_salestransactions_staging', 'dp_provider_staging', 'dp_rawmaterialtype_staging']
+[2025-02-24T04:25:49.325+0000] {taskinstance.py:341} INFO - ::group::Post task execution logs
+[2025-02-24T04:25:49.325+0000] {taskinstance.py:353} INFO - Marking task as SUCCESS. dag_id=dag_landings3, task_id=check_missing_tables, run_id=manual__2025-02-24T04:25:27.524048+00:00, execution_date=20250224T042527, start_date=20250224T042548, end_date=20250224T042549
+[2025-02-24T04:25:49.389+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2025-02-24T04:25:49.433+0000] {taskinstance.py:3901} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2025-02-24T04:25:49.438+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
