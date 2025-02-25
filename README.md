@@ -71,7 +71,7 @@ This setup ensured a robust and efficient data pipeline.
 
 Follow these instructions to install the project locally:
 
-1. Create a local folder, no meu ambiente MacOS criei a pasta em /Users/mauriciobueno/iff:
+1. Create a local folder, in my MacOS environment I created the folder in /Users/mauriciobueno/iff:
    ```bash
    cd /Users/mauriciobueno/
    mkdir iff
