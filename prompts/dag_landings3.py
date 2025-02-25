@@ -143,7 +143,7 @@ def check_table_exists(con, table_name: str) -> bool:
     return result > 0
 
 def list_missing_tables():
-    bucket_name = "iffdatatest"
+    bucket_name = os.getenv('BUCKET_NAME')
     prefix = "landing/"
     files = list_files_from_s3(bucket_name, prefix)
     csv_files = [f for f in files if f.endswith('.csv')]
@@ -184,7 +184,7 @@ def create_missing_tables(**kwargs):
     con.close()
 
 def insert_csv_data():
-    bucket_name = "iffdatatest"
+    bucket_name = os.getenv('BUCKET_NAME')
     prefix = "landing/"
     s3_files = list_files_from_s3(bucket_name, prefix)
     csv_files = [f for f in s3_files if f.endswith('.csv')]

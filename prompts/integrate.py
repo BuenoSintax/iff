@@ -116,7 +116,7 @@ if __name__ == "__main__":
     extracted_folder = download_and_extract_zip(url, temp_folder)
     
     # Nome do bucket S3 (por exemplo, 'iffdatatest')
-    bucket_name = "iffdatatest"
+    bucket_name = os.getenv('BUCKET_NAME')
     # Pasta de destino dentro do bucket (definida como "landing")
     s3_folder = "landing/"
     
