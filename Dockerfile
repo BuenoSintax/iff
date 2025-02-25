@@ -17,7 +17,7 @@ ARG DUCKDB_VERSION=0.7.1
 # ------------------------------------------------------------
 # ETAPA 1: Instala pacotes do sistema e Node.js
 # ------------------------------------------------------------
-RUN apt-get update && apt-get install -y --no-ainstall-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
     unzip \
