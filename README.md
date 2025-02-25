@@ -1,8 +1,50 @@
 # IFF Project
 
-To meet the proposed objective, we implemented a solution based on the Medallion Architecture, processing 9 sets of synthetic data that represent different business entities, such as customers, suppliers, revenues, among others. The system was designed to ingest, transform and model this data into three distinct tiers — Bronze, Silver and Gold — using modern, open source tools. Below, detail how the objective was achieved using Terraform, Airflow, Docker and DuckDB.
+To achieve the proposed objective, we implemented a solution using the **Medallion Architecture**, processing nine sets of synthetic data representing various business entities such as customers, suppliers, revenues, and more. The system was designed to ingest, transform, and model this data across three distinct tiers—**Bronze**, **Silver**, and **Gold**—using modern, open-source tools. Below, we detail how this was accomplished with **Terraform**, **Airflow**, **Docker**, and **DuckDB**.
 
-Docker is required as the virtual infrastructure is established there. This project was carried out in a MacOS environment and virtualized in Linux using container.
+---
+
+## Docker
+
+**Docker** was essential for creating the virtual infrastructure. The project was developed on a macOS environment and virtualized on Linux using containers. This approach ensured:
+
+- **Consistency** across different platforms
+- **Portability** for easy deployment
+- **Reproducibility** of the setup
+
+---
+
+## Terraform
+
+**Terraform** was utilized as an infrastructure-as-code tool to provision the AWS S3 environment. This step is optional if you already have a test bucket. If not, you can:
+
+1. Use a generic AWS account with access keys
+2. Follow the accompanying documentation to create a test bucket
+
+---
+
+## Airflow
+
+**Airflow** orchestrated workflows between the data lake and the analytical database, with all orchestration coded in Python. Key points include:
+
+- Minimized pipelines for streamlined unit testing of ingestion and processing
+- Recommendation: Subdivide pipelines further in larger-scale implementations for better **modularity** and **maintainability**
+
+---
+
+## DuckDB
+
+**DuckDB** acted as the analytical database, managing the data warehouse processing layers:
+
+- **Bronze Tier**: Handled data ingestion
+- **Silver Tier**: Facilitated efficient data transformation
+- **Gold Tier**: Enabled optimized data modeling
+
+This setup ensured a robust and efficient data pipeline.
+
+---
+
+
 
 ## Índice
 
