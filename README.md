@@ -71,7 +71,13 @@ This setup ensured a robust and efficient data pipeline.
 
 Follow these instructions to install the project locally:
 
-1. Clone the repository:
+1. Create a local folder, no meu ambiente MacOS criei a pasta em /Users/mauriciobueno/iff:
+   ```bash
+   cd /Users/mauriciobueno/
+   mkdir iff
+   cd iff
+
+2. Clone the repository:
    ```bash
    git clone https://github.com/seu-usuario/seu-repositorio.git
 
