@@ -99,7 +99,8 @@ This step is for create a virtual environment with Docker. You can create image 
    Below you can see that some changes need to be made.
 
    Ensure that ```-v /Users/mauriciobueno/iff:/home/infra``` is your cloned folder, i.e. ```-v 'YourPathHere'/iff:/home/infra```
-   Make sure you have the correct name for your bucket, in this case I chose ifftest1. Remembering that the name must be unique.
+   Here you will define the name of your AWS bucket. It needs to be globally ```unique```, in my case I chose ifftest1. If you don't have it, choose it anyway, because more
+   below I'll show you how to do it with Terraform.
     
    ```bash
    docker run -d --name infra_iff -p 8080:8080 \
