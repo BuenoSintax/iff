@@ -132,9 +132,9 @@ After that, the container should be running and the folder should have the follo
 From now on, the development environment is already working, if the bucket already exists! 🎉🎉 
 
 ---
+### Creating bucket
 
-
-⚠️ If the bucket does not exist on AWS. Follow the procedure below to create it via Terraform. ⚠️
+⚠️ If the bucket does not exist on AWS, follow the procedure below to create it via Terraform. ⚠️
 
 Access the ```/iff``` folder and then modify the file main.ts and save. Define the name of your new bucket to be created, ensuring that it is unique in AWS. 
 
