@@ -73,7 +73,9 @@ Follow these instructions to install the project locally:
 
 1. Clone the repository:
    ```bash
+   cd <your path here>
    git clone https://github.com/BuenoSintax/iff.git
+   ```
 
 For me, my local now is Users/mauriciobueno/iff
    
