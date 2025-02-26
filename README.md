@@ -163,6 +163,99 @@ Now everything is configured and airflow is already running locally at http://lo
 ---
 ## Diagram
 
+## Class Overview (English)
+
+Below is a brief overview of each class about the project.
+
+### **dp_salestransactions_silver**
+- **Purpose**: Represents sales transactions.
+- **Key Fields**:
+  - **transaction_id** (PK): Unique identifier of the transaction.
+  - **customer_id** (FK): Links to the customer who made the purchase.
+  - **flavour_id** (FK): References the flavor involved in the transaction.
+  - **quantity_liters**: Amount of product in liters.
+  - **transaction_date**: Date when the transaction occurred.
+  - **country**, **town**, **postal_code**: Geographic details.
+  - **amount_dollar**: Transaction amount in US dollars.
+  - **load_timestamp**, **source_date**: Metadata for data loading and lineage.
+
+--
+
+### **dp_customers_silver**
+- **Purpose**: Contains customer data.
+- **Key Fields**:
+  - **customer_id** (PK): Unique identifier of the customer.
+  - **name**, **city**, **country**: Core customer details.
+  - **valid_from**, **valid_to**, **active**: Tracks the lifecycle and status of the customer record.
+  - **load_timestamp**, **source_date**: Data processing timestamps.
+
+--
+
+### **dp_flavours_silver**
+- **Purpose**: Holds information about flavors.
+- **Key Fields**:
+  - **flavour_id** (PK): Unique identifier of the flavor.
+  - **name**, **description**: Flavor name and details.
+  - **valid_from**, **valid_to**, **active**: Controls the lifecycle of the flavor record.
+  - **load_timestamp**, **source_date**: Data audit timestamps.
+
+--
+
+### **dp_recipes_silver**
+- **Purpose**: Defines recipe compositions.
+- **Key Fields**:
+  - **recipe_id** (PK): Unique identifier of the recipe.
+  - **flavour_id** (FK): Links to the associated flavor.
+  - **ingredient_id** (FK): Links to the required ingredient.
+  - **quantity_grams**: Amount of ingredient in grams.
+  - **heat_process**: Describes any specific heat treatment in the recipe.
+  - **valid_from**, **valid_to**, **active**: Manages recipe versioning and availability.
+  - **load_timestamp**, **source_date**: Data lineage timestamps.
+
+--
+
+### **dp_ingredients_silver**
+- **Purpose**: Stores ingredient details.
+- **Key Fields**:
+  - **ingredient_id** (PK): Unique identifier of the ingredient.
+  - **name**, **chemical_formula**, **molecular_weight**: Main properties.
+  - **cost_per_gram**: Pricing attribute.
+  - **provider_id** (FK): References the supplier (provider).
+  - **valid_from**, **valid_to**, **active**: Lifecycle management of the ingredient.
+  - **load_timestamp**, **source_date**: Timestamps for data updating.
+
+--
+
+### **dp_provider_silver**
+- **Purpose**: Contains provider (supplier) information.
+- **Key Fields**:
+  - **provider_id** (PK): Unique identifier of the provider.
+  - **name**, **city**, **country**: Basic provider details.
+  - **valid_from**, **valid_to**, **active**: Lifecycle fields to track provider status.
+  - **load_timestamp**, **source_date**: Audit timestamps.
+
+--
+
+### **dp_ingredientsrawmaterial_silver**
+- **Purpose**: Maps ingredients to their raw material types.
+- **Key Fields**:
+  - **ingredient_rawmaterial_id** (PK): Unique identifier of the mapping record.
+  - **ingredient_id** (FK): References the ingredient.
+  - **raw_material_type_id** (FK): References the raw material type.
+  - **valid_from**, **valid_to**, **active**: Tracks the validity period for the mapping.
+  - **load_timestamp**, **source_date**: Audit timestamps.
+
+--
+
+### **dp_rawmaterialtype_silver**
+- **Purpose**: Describes categories or types of raw materials.
+- **Key Fields**:
+  - **raw_material_type_id** (PK): Unique identifier of the raw material type.
+  - **name**: Name of the raw material category.
+  - **valid_from**, **valid_to**, **active**: Controls the lifecycle of each raw material type.
+  - **load_timestamp**, **source_date**: Data audit timestamps.
+
+
 
 ```mermaid
 ---
