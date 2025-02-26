@@ -273,10 +273,10 @@ default_args = {
 }
 
 with DAG(
-    dag_id='dag_insert_tables',
+    dag_id='dag_test_load_to_staging',
     default_args=default_args,
-    schedule_interval='@daily',
     catchup=False,
+    schedule_interval=None
 ) as dag:
 
     check_missing = PythonOperator(
