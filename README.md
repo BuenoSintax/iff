@@ -154,17 +154,124 @@ Now you can see that the bucket was created successfully.
 
 <img width="1631" alt="image" src="https://github.com/user-attachments/assets/d2ea07b7-e3a6-4222-a52a-4c83ede163d4" />
 
----
 
-## Uso
 
-Now everything is configured. airflow is already running locally at http://localhost:8080
+Now everything is configured and airflow is already running locally at http://localhost:8080
 
 <img width="1680" alt="image" src="https://github.com/user-attachments/assets/04d81c08-a7a3-43ab-9b84-f91714b65bbc" />
 
+---
+## Diagram
 
 
+```mermaid
+---
+title: Diagram clss
+---
+classDiagram
+    direction LR
+    class dp_salestransactions_silver {
+        -transaction_id : INTEGER PK
+        -customer_id : INTEGER FK
+        -flavour_id : INTEGER FK
+        -quantity_liters : DOUBLE
+        -transaction_date : DATE
+        -country : VARCHAR
+        -town : VARCHAR
+        -postal_code : VARCHAR
+        -amount_dollar : DOUBLE
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
 
+    class dp_customers_silver {
+        -customer_id : INTEGER PK
+        -name : VARCHAR
+        -city : VARCHAR
+        -country : VARCHAR
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
 
+    class dp_flavours_silver {
+        -flavour_id : INTEGER PK
+        -name : VARCHAR
+        -description : VARCHAR
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
 
+    class dp_recipes_silver {
+        -recipe_id : INTEGER PK
+        -flavour_id : INTEGER FK
+        -ingredient_id : INTEGER FK
+        -quantity_grams : DOUBLE
+        -heat_process : VARCHAR
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
 
+    class dp_ingredients_silver {
+        -ingredient_id : INTEGER PK
+        -name : VARCHAR
+        -chemical_formula : VARCHAR
+        -molecular_weight : DOUBLE
+        -cost_per_gram : DOUBLE
+        -provider_id : INTEGER FK
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
+
+    class dp_provider_silver {
+        -provider_id : INTEGER PK
+        -name : VARCHAR
+        -city : VARCHAR
+        -country : VARCHAR
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
+
+    class dp_ingredientsrawmaterial_silver {
+        -ingredient_rawmaterial_id : INTEGER PK
+        -ingredient_id : INTEGER FK
+        -raw_material_type_id : INTEGER FK
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
+
+    class dp_rawmaterialtype_silver {
+        -raw_material_type_id : INTEGER PK
+        -name : VARCHAR
+        -valid_from : TIMESTAMP
+        -valid_to : TIMESTAMP
+        -active : BOOLEAN
+        -load_timestamp : TIMESTAMP
+        -source_date : DATE
+    }
+
+    dp_salestransactions_silver "1" --o "1" dp_customers_silver : customer_id
+    dp_salestransactions_silver "1" --o "1" dp_flavours_silver : flavour_id
+    dp_flavours_silver "1" --o "*" dp_recipes_silver : flavour_id
+    dp_recipes_silver "1" --o "1" dp_ingredients_silver : ingredient_id
+    dp_ingredients_silver "1" --o "1" dp_provider_silver : provider_id
+    dp_ingredients_silver "1" --o "*" dp_ingredientsrawmaterial_silver : ingredient_id
+    dp_ingredientsrawmaterial_silver "1" --o "1" dp_rawmaterialtype_silver : raw_material_type_id
+```
