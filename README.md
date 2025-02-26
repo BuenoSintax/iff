@@ -255,11 +255,11 @@ Below is a brief overview of each class about the project.
   - **valid_from**, **valid_to**, **active**: Controls the lifecycle of each raw material type.
   - **load_timestamp**, **source_date**: Data audit timestamps.
 
-
+###Above a diagram class
 
 ```mermaid
 ---
-title: Diagram clss
+title: Diagram class
 ---
 classDiagram
     direction LR
