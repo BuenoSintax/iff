@@ -126,3 +126,4 @@ if __name__ == "__main__":
     # Remove o diretório temporário local após o upload
     shutil.rmtree(temp_folder)
     logging.info("Upload completo e diretório temporário removido.")
+    

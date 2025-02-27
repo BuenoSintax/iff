@@ -2,9 +2,18 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 import duckdb
+import logging
 
 # Configuração do banco de dados
 DATABASE_PATH = 'iff_db.duckdb'
+
+# Configuração de logging
+logging.basicConfig(
+    filename='data_quality.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Função para criar a tabela silver, se ela não existir
 def setup_silver_table():
@@ -22,7 +31,7 @@ def setup_silver_table():
     );
     """
     conn.execute(create_table_query)
-    print("Tabela dp_ingredientsrawmaterial_silver verificada/criada com sucesso.")
+    logger.info("Tabela dp_ingredientsrawmaterial_silver verificada/criada com sucesso.")
     conn.close()
 
 # Função para processar os dados com lógica SCD Tipo 2
@@ -120,6 +129,56 @@ def process_scd2_ingredientsrawmaterial():
         """
         conn.execute(mark_processed_query, processed_ids)
     
+    logger.info("Processamento SCD Tipo 2 concluído com sucesso.")
+    conn.close()
+
+# Função para verificar a qualidade dos dados e registrar logs
+def check_data_quality():
+    conn = duckdb.connect(DATABASE_PATH)
+    
+    # Contar o número total de registros
+    total_records_query = "SELECT COUNT(*) FROM dp_ingredientsrawmaterial_silver;"
+    total_records = conn.execute(total_records_query).fetchone()[0]
+    logger.info(f"Total de registros na tabela dp_ingredientsrawmaterial_silver: {total_records}")
+    
+    # Verificar valores nulos em campos críticos
+    null_ingredient_rawmaterial_id_query = "SELECT COUNT(*) FROM dp_ingredientsrawmaterial_silver WHERE ingredient_rawmaterial_id IS NULL;"
+    null_ingredient_rawmaterial_id_count = conn.execute(null_ingredient_rawmaterial_id_query).fetchone()[0]
+    if null_ingredient_rawmaterial_id_count > 0:
+        logger.warning(f"Encontrados {null_ingredient_rawmaterial_id_count} registros com ingredient_rawmaterial_id nulo.")
+    else:
+        logger.info("Nenhum registro com ingredient_rawmaterial_id nulo encontrado.")
+    
+    null_ingredient_id_query = "SELECT COUNT(*) FROM dp_ingredientsrawmaterial_silver WHERE ingredient_id IS NULL;"
+    null_ingredient_id_count = conn.execute(null_ingredient_id_query).fetchone()[0]
+    if null_ingredient_id_count > 0:
+        logger.warning(f"Encontrados {null_ingredient_id_count} registros com ingredient_id nulo.")
+    else:
+        logger.info("Nenhum registro com ingredient_id nulo encontrado.")
+    
+    null_raw_material_type_id_query = "SELECT COUNT(*) FROM dp_ingredientsrawmaterial_silver WHERE raw_material_type_id IS NULL;"
+    null_raw_material_type_id_count = conn.execute(null_raw_material_type_id_query).fetchone()[0]
+    if null_raw_material_type_id_count > 0:
+        logger.warning(f"Encontrados {null_raw_material_type_id_count} registros com raw_material_type_id nulo.")
+    else:
+        logger.info("Nenhum registro com raw_material_type_id nulo encontrado.")
+    
+    # Verificar duplicatas de ingredient_rawmaterial_id com active = TRUE
+    duplicate_active_query = """
+    SELECT ingredient_rawmaterial_id, COUNT(*) 
+    FROM dp_ingredientsrawmaterial_silver 
+    WHERE active = TRUE 
+    GROUP BY ingredient_rawmaterial_id 
+    HAVING COUNT(*) > 1;
+    """
+    duplicates = conn.execute(duplicate_active_query).fetchall()
+    if duplicates:
+        for duplicate in duplicates:
+            logger.warning(f"Duplicata encontrada para ingredient_rawmaterial_id {duplicate[0]} com {duplicate[1]} registros ativos.")
+    else:
+        logger.info("Nenhuma duplicata de ingredient_rawmaterial_id com active = TRUE encontrada.")
+    
+    logger.info("Verificação de qualidade dos dados concluída com sucesso.")
     conn.close()
 
 # Definição do DAG
@@ -148,5 +207,11 @@ with DAG(
         python_callable=process_scd2_ingredientsrawmaterial
     )
     
+    # Tarefa 3: Verificar qualidade dos dados e emitir logs
+    check_data_quality_task = PythonOperator(
+        task_id='check_data_quality',
+        python_callable=check_data_quality
+    )
+    
     # Definir a ordem das tarefas
-    setup_task >> process_task
+    setup_task >> process_task >> check_data_quality_task

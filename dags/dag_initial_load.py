@@ -81,18 +81,20 @@ table_fields = {
         ("origin_date", "DATE"),
         ("merge_status", "INTEGER DEFAULT 0")
     ],
+    
     "recipes": [
-        ("row_id", "INTEGER PRIMARY KEY"),
-        ("recipe_id", "INTEGER"),
-        ("flavour_id", "INTEGER"),
-        ("ingredient_id", "INTEGER"),
-        ("quantity_grams", "DOUBLE"),
-        ("heat_process", "VARCHAR"),
-        ("inserted_at", "TIMESTAMP"),
-        ("batch_value", "INTEGER"),
-        ("origin_date", "DATE"),
-        ("merge_status", "INTEGER DEFAULT 0")
-    ],
+    ("row_id", "BIGINT"),
+    ("recipe_id", "INTEGER"),
+    ("flavour_id", "INTEGER"),
+    ("ingredient_id", "INTEGER"),
+    ("quantity_grams", "DOUBLE"),
+    ("heat_process", "VARCHAR"),
+    ("inserted_at", "TIMESTAMP"),
+    ("batch_value", "INTEGER"),
+    ("origin_date", "DATE"),
+    ("merge_status", "INTEGER DEFAULT 0")
+]
+ ,
     "customers": [
         ("row_id", "INTEGER PRIMARY KEY"),
         ("index", "INTEGER"),
