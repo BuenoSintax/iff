@@ -165,7 +165,7 @@ Now everything is configured and airflow is already running locally at http://lo
 <img width="1680" alt="image" src="https://github.com/user-attachments/assets/04d81c08-a7a3-43ab-9b84-f91714b65bbc" />
 
 ---
-## Diagram
+## Tables overview
 
 ### Class Overview
 
@@ -259,7 +259,8 @@ Below is a brief overview of each class about the project.
   - **valid_from**, **valid_to**, **active**: Controls the lifecycle of each raw material type.
   - **load_timestamp**, **source_date**: Data audit timestamps.
 
-###Above a diagram class
+
+### Below a diagram class of project
 
 ```mermaid
 ---
