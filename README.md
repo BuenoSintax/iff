@@ -108,6 +108,7 @@ This step is for create a virtual environment with Docker. You can create image 
      -e AWS_ACCESS_KEY_ID=<your access key here> \
      -e AWS_SECRET_ACCESS_KEY=<your secret key here> \
      -e AWS_DEFAULT_REGION=sa-east-1 \
+     -e AIRFLOW__CORE__DAG_DIR_LIST_INTERVAL=30 \
      -e AIRFLOW__CORE__LOAD_EXAMPLES=False \
      -e BUCKET_NAME=<your bucket with unique name> \
      infra_iff
