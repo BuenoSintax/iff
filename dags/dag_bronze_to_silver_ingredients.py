@@ -41,153 +41,189 @@ def setup_silver_table():
 def process_scd2_ingredients():
     conn = duckdb.connect(DATABASE_PATH)
     
-    # Lista para armazenar os ingredient_id processados
-    processed_ingredient_ids = []
-    
-    # 1. Inserir novos registros (ingredients que ainda não existem na silver)
+    # 1. Inserir novos registros (última versão de cada ingredient)
     new_records_query = """
     INSERT INTO dp_ingredients_silver
     SELECT 
-        ingredient_id,
-        name,
-        chemical_formula,
-        molecular_weight,
-        cost_per_gram,
-        provider_id,
-        inserted_at AS valid_from,
+        stg.ingredient_id,
+        stg.name,
+        stg.chemical_formula,
+        stg.molecular_weight,
+        stg.cost_per_gram,
+        stg.provider_id,
+        stg.inserted_at AS valid_from,
         NULL AS valid_to,
         TRUE AS active,
-        inserted_at AS load_timestamp,
-        origin_date AS source_date
-    FROM dp_ingredients_staging
-    WHERE merge_status = 0
-    AND ingredient_id NOT IN (SELECT ingredient_id FROM dp_ingredients_silver WHERE active = TRUE);
+        stg.inserted_at AS load_timestamp,
+        stg.origin_date AS source_date
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (PARTITION BY ingredient_id ORDER BY inserted_at DESC) AS rn
+        FROM dp_ingredients_staging
+        WHERE merge_status = 0
+    ) stg
+    WHERE stg.rn = 1
+    AND NOT EXISTS (
+        SELECT 1
+        FROM dp_ingredients_silver sil
+        WHERE sil.ingredient_id = stg.ingredient_id
+        AND sil.active = TRUE
+    );
     """
     conn.execute(new_records_query)
-    
-    # Obter os ingredient_id dos novos registros inseridos
-    new_ingredient_ids_query = """
-    SELECT DISTINCT ingredient_id
-    FROM dp_ingredients_staging
-    WHERE merge_status = 0
-    AND ingredient_id NOT IN (SELECT ingredient_id FROM dp_ingredients_silver WHERE active = TRUE);
-    """
-    new_ingredient_ids = [row[0] for row in conn.execute(new_ingredient_ids_query).fetchall()]
-    processed_ingredient_ids.extend(new_ingredient_ids)
-    
-    # 2. Identificar os ingredient_id que precisam ser atualizados
-    identify_updates_query = """
+
+    # 2. Identificar atualizações necessárias
+    updates_query = """
+    WITH latest_staging AS (
+        SELECT *,
+               ROW_NUMBER() OVER (PARTITION BY ingredient_id ORDER BY inserted_at DESC) AS rn
+        FROM dp_ingredients_staging
+        WHERE merge_status = 0
+    )
     SELECT 
-        stg.ingredient_id
-    FROM dp_ingredients_staging stg
-    JOIN dp_ingredients_silver sil
+        stg.ingredient_id,
+        stg.inserted_at
+    FROM latest_staging stg
+    INNER JOIN dp_ingredients_silver sil 
         ON stg.ingredient_id = sil.ingredient_id
-    WHERE stg.merge_status = 0
+    WHERE stg.rn = 1
     AND sil.active = TRUE
-    AND (stg.name != sil.name OR 
-         stg.chemical_formula != sil.chemical_formula OR 
-         stg.molecular_weight != sil.molecular_weight OR 
-         stg.cost_per_gram != sil.cost_per_gram OR 
-         stg.provider_id != sil.provider_id);
+    AND (
+        stg.name <> sil.name OR
+        stg.chemical_formula <> sil.chemical_formula OR
+        stg.molecular_weight <> sil.molecular_weight OR
+        stg.cost_per_gram <> sil.cost_per_gram OR
+        stg.provider_id <> sil.provider_id
+    );
     """
-    updated_ingredient_ids = [row[0] for row in conn.execute(identify_updates_query).fetchall()]
-    processed_ingredient_ids.extend(updated_ingredient_ids)
-    
-    # 3. Fechar registros antigos para os ingredient_id identificados
-    if updated_ingredient_ids:
-        placeholders = ', '.join(['?'] * len(updated_ingredient_ids))
-        close_old_records_query = f"""
+    updates = conn.execute(updates_query).fetchall()
+
+    if updates:
+        # 3. Fechar registros antigos
+        close_query = """
         UPDATE dp_ingredients_silver
-        SET valid_to = (
-            SELECT MAX(inserted_at)
-            FROM dp_ingredients_staging
-            WHERE ingredient_id = dp_ingredients_silver.ingredient_id
-            AND merge_status = 0
-        ),
+        SET valid_to = updates.inserted_at,
             active = FALSE
-        WHERE ingredient_id IN ({placeholders})
-        AND active = TRUE;
-        """
-        conn.execute(close_old_records_query, updated_ingredient_ids)
+        FROM (VALUES {}) AS updates(ingredient_id, inserted_at)
+        WHERE dp_ingredients_silver.ingredient_id = updates.ingredient_id
+        AND dp_ingredients_silver.active = TRUE;
+        """.format(", ".join(f"({id}, TIMESTAMP '{ts}')" for id, ts in updates))
         
-        # 4. Inserir novas versões para os ingredient_id identificados
-        insert_new_versions_query = f"""
+        conn.execute(close_query)
+
+        # 4. Inserir novas versões
+        insert_query = """
         INSERT INTO dp_ingredients_silver
         SELECT 
-            ingredient_id,
-            name,
-            chemical_formula,
-            molecular_weight,
-            cost_per_gram,
-            provider_id,
-            inserted_at AS valid_from,
+            stg.ingredient_id,
+            stg.name,
+            stg.chemical_formula,
+            stg.molecular_weight,
+            stg.cost_per_gram,
+            stg.provider_id,
+            stg.inserted_at AS valid_from,
             NULL AS valid_to,
             TRUE AS active,
-            inserted_at AS load_timestamp,
-            origin_date AS source_date
+            stg.inserted_at AS load_timestamp,
+            stg.origin_date AS source_date
+        FROM (
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY ingredient_id ORDER BY inserted_at DESC) AS rn
+            FROM dp_ingredients_staging
+            WHERE merge_status = 0
+        ) stg
+        WHERE stg.rn = 1
+        AND stg.ingredient_id IN ({});
+        """.format(", ".join(map(str, [id for id, _ in updates])))
+        
+        conn.execute(insert_query)
+
+    # 5. Marcar registros processados (Query Corrigida)
+    mark_processed_query = """
+    UPDATE dp_ingredients_staging AS target
+    SET merge_status = 1
+    FROM (
+        SELECT 
+            ingredient_id, 
+            MAX(inserted_at) AS max_inserted_at
         FROM dp_ingredients_staging
-        WHERE ingredient_id IN ({placeholders})
-        AND merge_status = 0;
-        """
-        conn.execute(insert_new_versions_query, updated_ingredient_ids)
-    
-    # 5. Atualizar o status na tabela staging apenas para os ingredient_id processados
-    if processed_ingredient_ids:
-        placeholders = ', '.join(['?'] * len(processed_ingredient_ids))
-        mark_processed_query = f"""
-        UPDATE dp_ingredients_staging
-        SET merge_status = 1
-        WHERE ingredient_id IN ({placeholders})
-        AND merge_status = 0;
-        """
-        conn.execute(mark_processed_query, processed_ingredient_ids)
-    
+        WHERE merge_status = 0
+        GROUP BY ingredient_id
+    ) AS latest
+    WHERE target.ingredient_id = latest.ingredient_id
+    AND target.inserted_at = latest.max_inserted_at
+    AND target.merge_status = 0;
+    """
+    conn.execute(mark_processed_query)
+
     logger.info("Processamento SCD Tipo 2 concluído com sucesso.")
     conn.close()
-
 # Função para verificar a qualidade dos dados e registrar logs
 def check_data_quality():
     conn = duckdb.connect(DATABASE_PATH)
     
-    # Contar o número total de registros
-    total_records_query = "SELECT COUNT(*) FROM dp_ingredients_silver;"
-    total_records = conn.execute(total_records_query).fetchone()[0]
-    logger.info(f"Total de registros na tabela dp_ingredients_silver: {total_records}")
-    
-    # Verificar valores nulos em campos críticos
-    null_ingredient_id_query = "SELECT COUNT(*) FROM dp_ingredients_silver WHERE ingredient_id IS NULL;"
-    null_ingredient_id_count = conn.execute(null_ingredient_id_query).fetchone()[0]
-    if null_ingredient_id_count > 0:
-        logger.warning(f"Encontrados {null_ingredient_id_count} registros com ingredient_id nulo.")
-    else:
-        logger.info("Nenhum registro com ingredient_id nulo encontrado.")
-    
-    null_name_query = "SELECT COUNT(*) FROM dp_ingredients_silver WHERE name IS NULL;"
-    null_name_count = conn.execute(null_name_query).fetchone()[0]
-    if null_name_count > 0:
-        logger.warning(f"Encontrados {null_name_count} registros com name nulo.")
-    else:
-        logger.info("Nenhum registro com name nulo encontrado.")
-    
-    # Verificar duplicatas de ingredient_id com active = TRUE
-    duplicate_active_query = """
+    # Verificação de registros ativos únicos
+    active_check = """
     SELECT ingredient_id, COUNT(*) 
     FROM dp_ingredients_silver 
     WHERE active = TRUE 
     GROUP BY ingredient_id 
     HAVING COUNT(*) > 1;
     """
-    duplicates = conn.execute(duplicate_active_query).fetchall()
+    duplicates = conn.execute(active_check).fetchall()
     if duplicates:
-        for duplicate in duplicates:
-            logger.warning(f"Duplicata encontrada para ingredient_id {duplicate[0]} com {duplicate[1]} registros ativos.")
-    else:
-        logger.info("Nenhuma duplicata de ingredient_id com active = TRUE encontrada.")
+        logger.error(f"Duplicatas ativas detectadas: {duplicates}")
+        raise ValueError("Registros duplicados ativos encontrados!")
     
-    logger.info("Verificação de qualidade dos dados concluída com sucesso.")
+    # Verificação de sobreposições temporais (Corrigida)
+    overlap_check = """
+    SELECT COUNT(*)
+    FROM dp_ingredients_silver t1
+    JOIN dp_ingredients_silver t2
+        ON t1.ingredient_id = t2.ingredient_id
+        AND t1.valid_from < t2.valid_to
+        AND t1.valid_to > t2.valid_from
+        AND (t1.valid_from != t2.valid_from OR t1.valid_to != t2.valid_to);
+    """
+    overlaps = conn.execute(overlap_check).fetchone()[0]
+    if overlaps > 0:
+        logger.error(f"Sobreposições temporais detectadas: {overlaps}")
+        raise ValueError("Sobreposições temporais encontradas!")
+    
+    # Verificação de valores nulos em colunas críticas
+    null_check = """
+    SELECT COUNT(*)
+    FROM dp_ingredients_silver
+    WHERE ingredient_id IS NULL OR name IS NULL OR valid_from IS NULL OR active IS NULL;
+    """
+    nulls = conn.execute(null_check).fetchone()[0]
+    if nulls > 0:
+        logger.error(f"Valores nulos encontrados em colunas críticas: {nulls}")
+        raise ValueError("Valores nulos em colunas críticas!")
+    
+    # Verificação de consistência de datas
+    date_consistency_check = """
+    SELECT COUNT(*)
+    FROM dp_ingredients_silver
+    WHERE active = FALSE AND valid_from >= valid_to;
+    """
+    date_errors = conn.execute(date_consistency_check).fetchone()[0]
+    if date_errors > 0:
+        logger.error(f"Inconsistências nas datas detectadas: {date_errors}")
+        raise ValueError("valid_from posterior a valid_to em registros inativos!")
+    
+    # Logs de observabilidade
+    total_records = conn.execute("SELECT COUNT(*) FROM dp_ingredients_silver;").fetchone()[0]
+    active_records = conn.execute("SELECT COUNT(*) FROM dp_ingredients_silver WHERE active = TRUE;").fetchone()[0]
+    inactive_records = conn.execute("SELECT COUNT(*) FROM dp_ingredients_silver WHERE active = FALSE;").fetchone()[0]
+    
+    logger.info(f"Total de registros: {total_records}")
+    logger.info(f"Registros ativos: {active_records}")
+    logger.info(f"Registros inativos: {inactive_records}")
+    logger.info("Verificação de qualidade passou com sucesso.")
+    
     conn.close()
 
-# Definição do DAG
 default_args = {
     'owner': 'data_team',
     'start_date': datetime(2023, 10, 1),
