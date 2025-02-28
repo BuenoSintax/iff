@@ -134,7 +134,9 @@ Access the ```/iff``` folder and then modify the file main.ts and save. Define t
 <img width="884" alt="image" src="https://github.com/user-attachments/assets/ed6a662c-b386-425e-a6b8-40aa6c151266" />
 
    
-   2- Execute one at a time
+   2- Execute one at a time with terminal container 
+
+   
    ```bash
    terraform init
    terraform plan
