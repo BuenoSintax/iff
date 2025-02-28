@@ -175,6 +175,109 @@ It should have the following characteristics now:
 <img width="367" alt="image" src="https://github.com/user-attachments/assets/6216c532-048f-4c81-ac88-56a3d0ee8b91" />
 
 
+As soon as you move the dags, after 30 seconds at http://localhost:8080 and reloading the page, the airflow must be like this
+
+<img width="1654" alt="image" src="https://github.com/user-attachments/assets/ee935fd2-887e-459a-a627-2967eaacf5d9" />
+
+---
+### Executing airflow
+
+To start the loading process, it is first necessary to execute the load, where it is checked which files are needed, where they come from and where they will go. 
+In this case, the ```.zip``` of the project is downloaded and then sent to the ```s3 bucket```
+
+By pressing the execute button, the trigger is activated and then the analytical database is created and all checks are carried out in addition to validations on tables and data.
+
+<img width="1654" alt="image" src="https://github.com/user-attachments/assets/74af1460-b8a4-402f-905f-e6fbffaed5f2" />
+
+
+
+```log
+b914c70d278c
+▶ Log message source details
+[2025-02-28, 19:10:22 UTC] {local_task_job_runner.py:123} ▶ Pre task execution logs
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_rawmaterialtype_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_customers_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_stocks_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_ingredientsrawmaterial_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_salestransactions_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_provider_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_recipes_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_ingredients_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {logging_mixin.py:190} INFO - Table dp_flavours_staging created successfully.
+[2025-02-28, 19:10:23 UTC] {python.py:240} INFO - Done. Returned value was: None
+[2025-02-28, 19:10:23 UTC] {taskinstance.py:341} ▶ Post task execution logs
+```
+
+
+```log
+[2025-02-28, 19:10:05 UTC] {local_task_job_runner.py:123} ▶ Pre-task Execution Logs
+[2025-02-28, 19:10:06 UTC] {subprocess.py:78} INFO - Tmp directory root location: /tmp
+[2025-02-28, 19:10:06 UTC] {subprocess.py:88} INFO - Command running: ['/usr/bin/bash', '-c', 'python /home/infra/prompts/integrate.py 2>&1']
+[2025-02-28, 19:10:06 UTC] {subprocess.py:99} INFO - Output:
+[2025-02-28, 19:10:06 UTC] {subprocess.py:106} INFO - INFO:root:Starting download of file: https://storage.googleapis.com/playoffs/iff/data_engineering.zip
+[2025-02-28, 19:10:08 UTC] {subprocess.py:106} INFO - INFO:root:File downloaded and saved to: /tmp/landing/data_engineering.zip
+[2025-02-28, 19:10:09 UTC] {subprocess.py:106} INFO - INFO:root:Content extracted to: /tmp/landing/extracted
+[2025-02-28, 19:10:09 UTC] {subprocess.py:106} INFO - INFO:root:ZIP file successfully removed.
+[2025-02-28, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250121/SalesTransactions_20240505_1.csv to s3://ifftest1/landing/20250121/SalesTransactions_20240505_1.csv
+[2025-02-28, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250121/Flavours_20240505_1.csv to s3://ifftest1/landing/20250121/Flavours_20240505_1.csv
+[2025-02-28, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Uploading /tmp/landing/extracted/data/data_engineering/20250121/RawMaterialType_20240505_1.csv to s3://ifftest1/landing/20250121/RawMaterialType_20240505_1.csv
+[2025-02-28, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Uploading /tmp/landing/extracted/data/data_engineering/20250121/Provider_20240505_2.csv to s3://ifftest1/landing/20250121/Provider_20240505_2.csv
+[2025-02-28, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250121/Provider_20240505_1.csv to s3://ifftest1/landing/20250121/Provider_20240505_1.csv
+[02/28/2025, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250121/SalesTransactions_20240505_2.csv to s3://ifftest1/landing/20250121/SalesTransactions_20240505_2.csv
+[2025-02-28, 19:10:10 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250121/IngredientsRawMaterial_20240505.csv to s3://ifftest1/landing/20250121/IngredientsRawMaterial_20240505.csv
+[2025-02-28, 19:10:11 UTC] {subprocess.py:106} INFO - INFO:root:Uploading /tmp/landing/extracted/data/data_engineering/20250122/Provider_20240506_1.csv to s3://ifftest1/landing/20250122/Provider_20240506_1.csv
+[2025-02-28, 19:10:11 UTC] {subprocess.py:106} INFO - INFO:root:Uploading /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240507_3.csv to s3://ifftest1/landing/20250122/Recipes_20240507_3.csv
+[2025-02-28, 19:10:11 UTC] {subprocess.py:106} INFO - INFO:root:Uploading /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240510_1.csv to s3://ifftest1/landing/20250122/Recipes_20240510_1.csv
+[02/28/2025, 19:10:11 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240507_1.csv to s3://ifftest1/landing/20250122/Recipes_20240507_1.csv
+[2025-02-28, 19:10:11 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250122/SalesTransactions_20240506_2.csv to s3://ifftest1/landing/20250122/SalesTransactions_20240506_2.csv
+[2025-02-28, 19:10:11 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240510_2.csv to s3://ifftest1/landing/20250122/Recipes_20240510_2.csv
+[2025-02-28, 19:10:12 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250122/Ingredients_20240506_1.csv to s3://ifftest1/landing/20250122/Ingredients_20240506_1.csv
+[2025-02-28, 19:10:12 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250122/Recipes_20240507_2.csv to s3://ifftest1/landing/20250122/Recipes_20240507_2.csv
+[2025-02-28, 19:10:12 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250122/SalesTransactions_20240506_1.csv to s3://ifftest1/landing/20250122/SalesTransactions_20240506_1.csv
+[2025-02-28, 19:10:12 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250125/Stocks_20240505_1.csv to s3://ifftest1/landing/20250125/Stocks_20240505_1.csv
+[02/28/2025, 19:10:12 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250124/Customers_20240508_1.csv to s3://ifftest1/landing/20250124/Customers_20240508_1.csv
+[2025-02-28, 19:10:12 UTC] {subprocess.py:106} INFO - INFO:root:Sending /tmp/landing/extracted/data/data_engineering/20250123/Ingredients_20240507_1.csv to
+```
+
+After that, you can check in your iff directory the creation of the file ```iff_db.duckdb``` where the analytical database is located. 
+In my case with dbeaver, I accessed this database by selecting this file.
+
+<img width="1680" alt="image" src="https://github.com/user-attachments/assets/d9960253-d33b-47e8-b496-129eccb5d1d7" />
+
+
+It is now possible to run the silver layers for each table. There, transactional control is guaranteed.
+
+<img width="1680" alt="image" src="https://github.com/user-attachments/assets/76777df8-17a1-4f05-a5e3-e2c4327d694d" />
+
+You can see in dbeaver now that the silver tables with validity and if they are active are listed with the guaranteed control SCD 2, exception of salestransaction. 
+Both the insertion values ​​in ```load_timestamp``` and the file source date ```source_date``` are fully configured.
+
+<img width="1680" alt="image" src="https://github.com/user-attachments/assets/2b00a13c-d7f6-4d3e-8ebd-8fe49039c7c4" />
+
+Após todas as tabelas silver garantidas e com seus controles transacionais como ativos, é possivel gerar uma tabela final como essa abaixo. 
+It is a simple analysis between recipe, unit flavor costs, total cost with all ingredients and profit.
+
+<img width="1680" alt="image" src="https://github.com/user-attachments/assets/c956a03d-79d5-4b17-9bac-ce8c4cc54d79" />
+
+```log
+b914c70d278c
+ ▶ Log message source details
+[2025-02-28, 19:29:57 UTC] {local_task_job_runner.py:123} ▶ Pre task execution logs
+[2025-02-28, 19:29:57 UTC] {dag_gold_tables.py:172} INFO - View vw_salestransaction_analytics created or replaced successfully.
+[2025-02-28, 19:29:57 UTC] {python.py:240} INFO - Done. Returned value was: None
+[2025-02-28, 19:29:57 UTC] {taskinstance.py:341} ▶ Post task execution logs
+```
+```log
+b914c70d278c
+ ▶ Log message source details
+[2025-02-28, 19:30:01 UTC] {local_task_job_runner.py:123} ▶ Pre task execution logs
+[2025-02-28, 19:30:02 UTC] {dag_gold_tables.py:191} INFO - Total records in vw_salestransaction_analytics view: 50000
+[2025-02-28, 19:30:02 UTC] {dag_gold_tables.py:199} INFO - No records with null transaction_id in the view.
+[2025-02-28, 19:30:02 UTC] {dag_gold_tables.py:213} INFO - No duplicates in vw_salestransaction_analytics view.
+[2025-02-28, 19:30:02 UTC] {dag_gold_tables.py:215} INFO - Quality check of view (GOLD layer) completed.
+[2025-02-28, 19:30:02 UTC] {python.py:240} INFO - Done. Returned value was: None
+[2025-02-28, 19:30:02 UTC] {taskinstance.py:341} ▶ Post task execution logs
+```
 
 
 
@@ -694,6 +797,10 @@ Everything else is also similar to the exception of salestransaction.
 
 ### Data Quality 
 This pipeline emphasizes clarity, quality, and efficiency at every step. In the code, detailed comments explain how the database configuration and logger setup ensure that the environment is correctly initialized, while the functions ```setup_silver_table()``` and ```process_scd2_customers()``` incorporate clear, modular logic for creating tables and applying ```SCD Type 2``` transformations—ensuring that historical changes are captured reliably. The ```check_data_quality()``` function is explicitly designed to identify and log issues such as null values and duplicate keys, which demonstrates our focus on data quality handling. Furthermore, the ```create_gold_view()``` function encapsulates the transformation logic—calculating cost per liter and profit—which is structured to be both maintainable and scalable. This careful partitioning and incremental loading approach not only adheres to best practices but also ensures that even non-technical stakeholders can understand the data flow and its transformations.
+
+
+## Final data
+
 
 
 
