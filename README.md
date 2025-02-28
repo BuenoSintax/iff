@@ -246,7 +246,7 @@ Both the insertion values ​​in ```load_timestamp``` and the file source date
 
 <img width="1680" alt="image" src="https://github.com/user-attachments/assets/2b00a13c-d7f6-4d3e-8ebd-8fe49039c7c4" />
 
-Após todas as tabelas silver garantidas e com seus controles transacionais como ativos, é possivel gerar uma tabela final como essa abaixo. 
+After all the silver tables are guaranteed and with their transactional controls as assets, it is possible to generate a final table like the one below. It is a simple analysis between recipe, unit flavor costs, total cost with all ingredients and profit.
 It is a simple analysis between recipe, unit flavor costs, total cost with all ingredients and profit.
 
 <img width="1680" alt="image" src="https://github.com/user-attachments/assets/c956a03d-79d5-4b17-9bac-ce8c4cc54d79" />
