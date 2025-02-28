@@ -148,6 +148,9 @@ Now you can see that the bucket was created successfully.
 
 
 Now everything is configured and airflow is already running locally at http://localhost:8080
+Your airflow credentials is:
+u: admin
+p: admin
 
 <img width="1680" alt="image" src="https://github.com/user-attachments/assets/04d81c08-a7a3-43ab-9b84-f91714b65bbc" />
 
