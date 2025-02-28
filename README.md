@@ -45,27 +45,14 @@ This setup ensured a robust and efficient data pipeline.
 ---
 
 
-
-## Índice
-
-- [Instalação](#instalação)
-- [Configuração](#configuração)
-- [Uso](#uso)
-- [Exemplos](#exemplos)
-- [Contribuição](#contribuição)
-- [Licença](#licença)
-- [Contato](#contato)
-
-## Instalação
-
-### Pré-requisitos
+### Prerequisites
 
 - Docker version 27.4.0, build bde2b89
 - Python 3.12.9
 - Dbeaver 24.1.4.202408041450 (Optional)
 - Airflow 2.10.5
 - Terraform 1.10.5
-- Dependências externas, se houver.
+- External dependencies, if any.
 
 ### Initial Steps
 
@@ -795,11 +782,8 @@ with DAG(
 ```
 Everything else is also similar to the exception of salestransaction.
 
-### Data Quality 
+### Data Quality & Overview
 This pipeline emphasizes clarity, quality, and efficiency at every step. In the code, detailed comments explain how the database configuration and logger setup ensure that the environment is correctly initialized, while the functions ```setup_silver_table()``` and ```process_scd2_customers()``` incorporate clear, modular logic for creating tables and applying ```SCD Type 2``` transformations—ensuring that historical changes are captured reliably. The ```check_data_quality()``` function is explicitly designed to identify and log issues such as null values and duplicate keys, which demonstrates our focus on data quality handling. Furthermore, the ```create_gold_view()``` function encapsulates the transformation logic—calculating cost per liter and profit—which is structured to be both maintainable and scalable. This careful partitioning and incremental loading approach not only adheres to best practices but also ensures that even non-technical stakeholders can understand the data flow and its transformations.
-
-
-## Final data
 
 
 
