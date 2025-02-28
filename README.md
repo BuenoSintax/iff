@@ -165,6 +165,20 @@ Now everything is configured and airflow is already running locally at http://lo
 <img width="1680" alt="image" src="https://github.com/user-attachments/assets/04d81c08-a7a3-43ab-9b84-f91714b65bbc" />
 
 ---
+### On airflow
+After airflow is loaded, it is necessary to send the dags to the airflow/dags folder, so that the pipeline is active.
+
+<img width="367" alt="image" src="https://github.com/user-attachments/assets/0a8fa8fe-e0f3-4de3-a755-1ec70555ac97" />
+
+It should have the following characteristics now:
+
+<img width="367" alt="image" src="https://github.com/user-attachments/assets/6216c532-048f-4c81-ac88-56a3d0ee8b91" />
+
+
+
+
+
+
 ## Tables overview
 
 ### Class Overview
@@ -259,8 +273,12 @@ Below is a brief overview of each class about the project.
   - **valid_from**, **valid_to**, **active**: Controls the lifecycle of each raw material type.
   - **load_timestamp**, **source_date**: Data audit timestamps.
 
+During the integration process, I encountered several challenges with our data logic and table formats. For instance, the ```dp_recipes_silver``` table contained extremely high values in the quantity_grams field, which initially created ambiguity about whether these quantities were intended for a single liter of production or for an entire batch. This directly affected our cost calculations, as the conversion logic had to be carefully defined—assuming that 1 gram equals 1 ml and then converting the total to liters by dividing by an appropriate factor (```e.g., 1000 when the recipe is for 1,000 liters```). Additionally, there were issues with duplicate and inconsistent records, especially in the dimensions used for joining (such as ```customers``` and ```flavours```), which could result in repeated transaction IDs in the final outputs. I addressed these problems by implementing robust aggregation and filtering in our SQL queries—using grouping and distinct clauses where necessary—and by incorporating data quality checks that validate critical fields (like ensuring no null or duplicate values in primary keys) as part of the pipeline. These measures, along with clear and modular code, ensured that our transformation logic in the GOLD layer accurately calculates the cost per liter and profit, while also maintaining the integrity and traceability of the data.
+
 
 ### Below a diagram class of project
+
+
 
 ```mermaid
 ---
@@ -373,3 +391,309 @@ classDiagram
     dp_ingredients_silver "1" --o "*" dp_ingredientsrawmaterial_silver : ingredient_id
     dp_ingredientsrawmaterial_silver "1" --o "1" dp_rawmaterialtype_silver : raw_material_type_id
 ```
+### How it works?
+
+## Initial pipeline
+# Business Team Overview
+
+This **pipeline** (Airflow DAG) performs the **initial load** of CSV files (stored in an S3 bucket) into a **DuckDB** database. Its main purpose is to make data available for analysis in a reliable manner. In summary, the flow:
+
+1. **Discovers** CSV files in the `landing/` folder in S3.
+2. **Creates** staging tables in DuckDB if they do not exist.
+3. **Inserts** CSV data into those tables.
+4. **Checks data quality** (e.g., null fields, duplicates).
+5. **Moves** processed files to the `ingested/` folder for reference.
+
+So, whenever new files arrive in S3, this pipeline loads, validates, and archives them. As a result, the data becomes ready for deeper analysis and reporting.
+
+---
+
+# Technical Overview A
+
+The DAG (`dag_initial_load`) has the following **tasks** in Airflow:
+
+1. **`run_integrate_py` (BashOperator)**  
+   - Executes the `integrate.py` Python script via a Bash command.
+
+2. **`check_missing_tables` (PythonOperator)**  
+   - Lists CSV files on S3.
+   - Parses filenames (extracting table name, date, and batch) using `parse_filename`.
+   - Checks which staging tables (`dp_<table>_staging`) do not yet exist in DuckDB.
+   - Returns the missing table names via XCom.
+
+3. **`create_missing_tables` (PythonOperator)**  
+   - Reads the list of missing tables from XCom.
+   - Creates each table in DuckDB based on the field definitions (`table_fields`).
+   - Also creates a sequence for `row_id` in each table.
+
+4. **`insert_csv_data` (PythonOperator)**  
+   - Lists CSV files on S3 again.
+   - For each CSV, determines which staging table to load into.
+   - Uses `read_csv_auto` to insert data into DuckDB.
+   - Fills fields such as `row_id`, `inserted_at`, `batch_value`, `origin_date`.
+
+5. **`check_data_quality` (PythonOperator)**  
+   - Receives from XCom the names of the tables that were loaded.
+   - For each table, performs checks:
+     - Total record count.
+     - Nulls in critical fields.
+     - Duplicates in unique fields (e.g., `transaction_id` in `salestransactions`).
+   - Logs the results in `data_quality.log`.
+
+6. **`move_files_to_ingested` (PythonOperator)**  
+   - Reads from XCom the list of processed CSV files.
+   - Moves each from `landing/` to `ingested/` folder in S3.
+   - Ensures the `ingested/` folder exists.
+
+
+
+### Execution Flow
+
+# Business Team Explanation 
+
+This pipeline implements a **Type 2 Slowly Changing Dimension (SCD)** process for the **customers** data. In simpler terms, it tracks **historical changes** in a customer's attributes (like name, city, country) over time. Each time a customer's information changes, the pipeline:
+
+1. Closes (inactivates) the previous record in the Silver table by setting a `valid_to` date.
+2. Inserts a new, active record for that customer, starting from the new change date.
+
+As a result, I can preserve the **history** of how a customer's data changes over time. This benefits auditing and analytics: you can see **who** changed, **what** changed, and **when** it changed.
+
+Additionally, the pipeline checks **data quality**. It logs how many records exist in the Silver table, flags any null `customer_id`, and warns if there are multiple active records for the same customer.
+
+---
+
+#  Technical Explanation
+
+Below is the **Airflow DAG** code. It follows these steps:
+
+1. **`setup_silver_table`**: Creates or checks the Silver table `dp_customers_silver`.
+2. **`process_scd2_customers`**: Applies SCD Type 2 logic using a staging table `dp_customers_staging`.
+   - Inserts new customers if they don't exist in Silver.
+   - Identifies updated records (where name, city, or country changed).
+   - Closes the old versions by setting `valid_to` and `active = FALSE`.
+   - Inserts new active versions.
+   - Marks them as processed in staging (`merge_status = 1`).
+3. **`check_data_quality`**: Logs total records, checks for null `customer_id`, and detects duplicates where `active = TRUE`.
+
+Finally, the DAG orchestrates the tasks in order: **setup → process → data quality**.
+
+---
+
+# The base code
+
+```python
+from datetime import datetime, timedelta
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+import duckdb
+import logging
+
+# Database configuration
+DATABASE_PATH = 'iff_db.duckdb'
+
+# Logger configuration
+logging.basicConfig(
+    filename='data_quality.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Function to create the silver table, if it does not exist
+def setup_silver_table():
+    conn = duckdb.connect(DATABASE_PATH)
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS dp_customers_silver (
+        customer_id INTEGER,
+        name VARCHAR,
+        city VARCHAR,
+        country VARCHAR,
+        valid_from TIMESTAMP,
+        valid_to TIMESTAMP,
+        active BOOLEAN,
+        load_timestamp TIMESTAMP,
+        source_date DATE
+    );
+    """
+    conn.execute(create_table_query)
+    logger.info("Tabela dp_customers_silver verificada/criada com sucesso.")
+    conn.close()
+
+# Function to process the data with SCD Type 2 logic
+def process_scd2_customers():
+    conn = duckdb.connect(DATABASE_PATH)
+    
+    # List to store the processed customer_id
+    processed_customer_ids = []
+    
+    # 1. Insert new records (customers who do not yet exist in silver)
+    new_records_query = """
+    INSERT INTO dp_customers_silver
+    SELECT 
+        customer_id,
+        name,
+        location_city AS city,
+        location_country AS country,
+        inserted_at AS valid_from,
+        NULL AS valid_to,
+        TRUE AS active,
+        inserted_at AS load_timestamp,
+        origin_date AS source_date
+    FROM dp_customers_staging
+    WHERE merge_status = 0
+    AND customer_id NOT IN (SELECT customer_id FROM dp_customers_silver WHERE active = TRUE);
+    """
+    conn.execute(new_records_query)
+    
+    # Obtain the customer_id of the new inserted records
+    new_customer_ids_query = """
+    SELECT DISTINCT customer_id
+    FROM dp_customers_staging
+    WHERE merge_status = 0
+    AND customer_id NOT IN (SELECT customer_id FROM dp_customers_silver WHERE active = TRUE);
+    """
+    new_customer_ids = [row[0] for row in conn.execute(new_customer_ids_query).fetchall()]
+    processed_customer_ids.extend(new_customer_ids)
+    
+    # 2. Identify the customer_id that need to be updated
+    identify_updates_query = """
+    SELECT 
+        stg.customer_id
+    FROM dp_customers_staging stg
+    JOIN dp_customers_silver sil
+        ON stg.customer_id = sil.customer_id
+    WHERE stg.merge_status = 0
+    AND sil.active = TRUE
+    AND (stg.name != sil.name OR stg.location_city != sil.city OR stg.location_country != sil.country);
+    """
+    updated_customer_ids = [row[0] for row in conn.execute(identify_updates_query).fetchall()]
+    processed_customer_ids.extend(updated_customer_ids)
+    
+    # 3. Close old records for the identified customer_id
+    if updated_customer_ids:
+        placeholders = ', '.join(['?'] * len(updated_customer_ids))
+        close_old_records_query = f"""
+        UPDATE dp_customers_silver
+        SET valid_to = (
+            SELECT MAX(inserted_at)
+            FROM dp_customers_staging
+            WHERE customer_id = dp_customers_silver.customer_id
+            AND merge_status = 0
+        ),
+            active = FALSE
+        WHERE customer_id IN ({placeholders})
+        AND active = TRUE;
+        """
+        conn.execute(close_old_records_query, updated_customer_ids)
+        
+        # 4. Insert new versions for the identified customer_id
+        insert_new_versions_query = f"""
+        INSERT INTO dp_customers_silver
+        SELECT 
+            customer_id,
+            name,
+            location_city AS city,
+            location_country AS country,
+            inserted_at AS valid_from,
+            NULL AS valid_to,
+            TRUE AS active,
+            inserted_at AS load_timestamp,
+            origin_date AS source_date
+        FROM dp_customers_staging
+        WHERE customer_id IN ({placeholders})
+        AND merge_status = 0;
+        """
+        conn.execute(insert_new_versions_query, updated_customer_ids)
+    
+    # 5. Update the status in the staging table only for the processed customer_id
+    if processed_customer_ids:
+        placeholders = ', '.join(['?'] * len(processed_customer_ids))
+        mark_processed_query = f"""
+        UPDATE dp_customers_staging
+        SET merge_status = 1
+        WHERE customer_id IN ({placeholders})
+        AND merge_status = 0;
+        """
+        conn.execute(mark_processed_query, processed_customer_ids)
+    
+    logger.info("Processamento SCD Tipo 2 concluído com sucesso.")
+    conn.close()
+
+# Function to check data quality and add observability logs
+def check_data_quality():
+    conn = duckdb.connect(DATABASE_PATH)
+    
+    # Count the total number of records
+    total_records_query = "SELECT COUNT(*) FROM dp_customers_silver;"
+    total_records = conn.execute(total_records_query).fetchone()[0]
+    logger.info(f"Total de registros na tabela dp_customers_silver: {total_records}")
+    
+    # Check for records with null customer_id
+    null_customer_id_query = "SELECT COUNT(*) FROM dp_customers_silver WHERE customer_id IS NULL;"
+    null_customer_id_count = conn.execute(null_customer_id_query).fetchone()[0]
+    if null_customer_id_count > 0:
+        logger.warning(f"Encontrados {null_customer_id_count} registros com customer_id nulo.")
+    else:
+        logger.info("Nenhum registro com customer_id nulo encontrado.")
+    
+    # Check for duplicates of customer_id with active = TRUE
+    duplicate_active_query = """
+    SELECT customer_id, COUNT(*) 
+    FROM dp_customers_silver 
+    WHERE active = TRUE 
+    GROUP BY customer_id 
+    HAVING COUNT(*) > 1;
+    """
+    duplicates = conn.execute(duplicate_active_query).fetchall()
+    if duplicates:
+        for duplicate in duplicates:
+            logger.warning(f"Duplicata encontrada para customer_id {duplicate[0]} com {duplicate[1]} registros ativos.")
+    else:
+        logger.info("Nenhuma duplicata de customer_id com active = TRUE encontrada.")
+    
+    # Observability log indicating the end of the DAG
+    logger.info("Execução da DAG concluída com sucesso.")
+    conn.close()
+
+# DAG definition
+default_args = {
+    'owner': 'data_team',
+    'start_date': datetime(2023, 10, 1),
+    'schedule_interval': None  # Desativa o agendamento automático
+}
+
+with DAG(
+    dag_id='dag_bronze_to_silver_customers',
+    default_args=default_args,
+    description='Pipeline SCD Tipo 2 para dp_customers_silver',
+    catchup=False,
+    schedule_interval=None
+) as dag:
+    # Task 1: Configure the silver table
+    setup_task = PythonOperator(
+        task_id='setup_silver_table',
+        python_callable=setup_silver_table
+    )
+    
+    # Task 2: Process the data with SCD Type 2
+    process_task = PythonOperator(
+        task_id='process_scd2_customers',
+        python_callable=process_scd2_customers
+    )
+    
+    # Task 3: Check data quality and log
+    check_data_quality_task = PythonOperator(
+        task_id='check_data_quality',
+        python_callable=check_data_quality
+    )
+    
+    # Define task order
+    setup_task >> process_task >> check_data_quality_task
+```
+Everything else is also similar to the exception of salestransaction.
+
+### Data Quality 
+This pipeline emphasizes clarity, quality, and efficiency at every step. In the code, detailed comments explain how the database configuration and logger setup ensure that the environment is correctly initialized, while the functions ```setup_silver_table()``` and ```process_scd2_customers()``` incorporate clear, modular logic for creating tables and applying ```SCD Type 2``` transformations—ensuring that historical changes are captured reliably. The ```check_data_quality()``` function is explicitly designed to identify and log issues such as null values and duplicate keys, which demonstrates our focus on data quality handling. Furthermore, the ```create_gold_view()``` function encapsulates the transformation logic—calculating cost per liter and profit—which is structured to be both maintainable and scalable. This careful partitioning and incremental loading approach not only adheres to best practices but also ensures that even non-technical stakeholders can understand the data flow and its transformations.
+
+
+
