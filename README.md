@@ -484,6 +484,7 @@ classDiagram
 ### How it works?
 
 ## Initial pipeline
+
 # Business Team Overview
 
 This **pipeline** (Airflow DAG) performs the **initial load** of CSV files (stored in an S3 bucket) into a **DuckDB** database. Its main purpose is to make data available for analysis in a reliable manner. In summary, the flow:
